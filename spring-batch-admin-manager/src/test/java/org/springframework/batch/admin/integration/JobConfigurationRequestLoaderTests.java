@@ -20,6 +20,7 @@ import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -30,8 +31,11 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.JobParametersValidator;
+import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.support.DefaultJobLoader;
 import org.springframework.batch.core.configuration.support.MapJobRegistry;
+import org.springframework.batch.core.step.NoSuchStepException;
+import org.springframework.batch.core.step.StepLocator;
 import org.springframework.context.support.StaticApplicationContext;
 import org.springframework.core.io.ByteArrayResource;
 
@@ -74,7 +78,7 @@ public class JobConfigurationRequestLoaderTests {
 							+ "xsi:schemaLocation='http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd'><bean class='%s$StubJob'/></beans>",
 					JobConfigurationRequestLoaderTests.class.getName());
 
-	public static class StubJob implements Job {
+	public static class StubJob implements Job, StepLocator {
 
 		public void execute(JobExecution execution) {
 		}
@@ -94,6 +98,14 @@ public class JobConfigurationRequestLoaderTests {
 		public JobParametersValidator getJobParametersValidator() {
 			return null;
 		}
+
+        public Collection<String> getStepNames() {
+            return Collections.emptyList();
+        }
+
+        public Step getStep(String stepName) throws NoSuchStepException {
+            throw new NoSuchStepException("Step [" + stepName + "] does not exist");
+        }
 
 	}
 
