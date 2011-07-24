@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jms="http://www.springframework.org/schema/jms"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd">
+
+    <description>
+        Declares the queue and the message listener processing step execution requests
+    </description>
+
+    <import resource="classpath:/org/springframework/batch/execution/jms/jms-context.xml"/>
+    <import resource="classpath:/org/springframework/batch/execution/jms/partition/partition-infrastructure-context.xml"/>
+
+
+    <bean name="queue/stepExecutionRequest" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg value="queue/stepExecutionRequest"/>
+    </bean>
+
+    <jms:listener-container destination-resolver="destinationResolver"
+                            connection-factory="connectionFactory"
+                            destination-type="queue"
+                            concurrency="5">
+        <jms:listener destination="queue/stepExecutionRequest" ref="messageListener"/>
+    </jms:listener-container>
+
+    <bean id="messageListener"
+          class="org.springframework.batch.execution.jms.partition.StepExecutionRequestMessageListener">
+        <property name="jmsTemplate" ref="jmsTemplate"/>
+        <property name="stepExecutionRequestHandler">
+            <bean class="org.springframework.batch.integration.partition.DefaultStepExecutionRequestHandler">
+                <property name="jobRepository" ref="jobRepository"/>
+                <property name="stepRegistry" ref="jobRegistry"/>
+                <property name="stepExecutionRequestMapper">
+                    <bean class="org.springframework.batch.integration.partition.support.DefaultStepExecutionRequestMapper">
+                        <property name="jobExplorer" ref="jobExplorer"/>
+                    </bean>
+                </property>
+                <!-- Some listeners could be added here -->
+            </bean>
+        </property>
+    </bean>
+
+</beans>

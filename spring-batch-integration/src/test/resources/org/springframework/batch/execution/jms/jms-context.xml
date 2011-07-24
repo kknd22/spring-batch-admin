@@ -11,6 +11,9 @@
         <property name="brokerURL" value="vm://localhost"/>
     </bean>
 
+    <bean id="destinationResolver"
+          class="org.springframework.jms.support.destination.BeanFactoryDestinationResolver"/>
+
     <bean id="brokerService" class="org.apache.activemq.broker.BrokerService" init-method="start"
           destroy-method="stop">
         <property name="brokerName" value="localhost"/>

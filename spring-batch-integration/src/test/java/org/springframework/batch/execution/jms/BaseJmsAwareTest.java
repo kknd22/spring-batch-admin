@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.jms.partition.aggregation;
+package org.springframework.batch.execution.jms;
 
 import org.apache.activemq.command.ActiveMQQueue;
 import org.junit.runner.RunWith;
@@ -31,7 +31,7 @@ import javax.jms.Queue;
 @ContextConfiguration
 @RunWith(SpringJUnit4ClassRunner.class)
 @DirtiesContext
-public abstract class BaseJmsAggregationTest {
+public abstract class BaseJmsAwareTest {
 
     protected final Queue queueA = new ActiveMQQueue("queueA");
 

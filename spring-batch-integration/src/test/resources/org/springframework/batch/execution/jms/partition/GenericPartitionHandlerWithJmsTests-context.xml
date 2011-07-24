@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+    <import resource="classpath:/org/springframework/batch/execution/jms/partition/jms-aggregation-context.xml"/>
+
+    <bean id="jobLoader" class="org.springframework.batch.core.configuration.support.DefaultJobLoader">
+        <property name="jobRegistry" ref="jobRegistry"/>
+    </bean>
+
+    <!-- Register the jobs and feeds the registries to be used by (remote) workers -->
+    <bean class="org.springframework.batch.core.configuration.support.AutomaticJobRegistrar">
+		<property name="applicationContextFactories">
+			<bean class="org.springframework.batch.core.configuration.support.ClasspathXmlApplicationContextsFactoryBean">
+				<property name="resources" value="classpath:/org/springframework/batch/execution/jms/partition/jms-execution-jobs.xml" />
+			</bean>
+		</property>
+		<property name="jobLoader">
+			<bean class="org.springframework.batch.core.configuration.support.DefaultJobLoader">
+				<property name="jobRegistry" ref="jobRegistry" />
+			</bean>
+		</property>
+	</bean>
+
+</beans>

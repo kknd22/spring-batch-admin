@@ -16,6 +16,7 @@
 package org.springframework.batch.execution.jms.partition.aggregation;
 
 import org.junit.Test;
+import org.springframework.batch.execution.jms.BaseJmsAwareTest;
 import org.springframework.batch.execution.jms.partition.aggregation.support.CountBasedAggregationCompletionPolicy;
 import org.springframework.batch.execution.jms.partition.aggregation.support.StringAggregationItemJmsMapper;
 import org.springframework.batch.execution.jms.partition.aggregation.support.TimeBasedAggregationTimeoutPolicy;
@@ -29,7 +30,7 @@ import static junit.framework.Assert.*;
 /**
  * @author Stephane Nicoll
  */
-public class JmsAggregationContextBuilderTests extends BaseJmsAggregationTest {
+public class JmsAggregationContextBuilderTests extends BaseJmsAwareTest {
 
     @Test
     public void builderWithNullSession() {

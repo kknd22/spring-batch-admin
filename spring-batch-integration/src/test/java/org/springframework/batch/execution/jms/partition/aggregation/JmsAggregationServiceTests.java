@@ -16,6 +16,8 @@
 package org.springframework.batch.execution.jms.partition.aggregation;
 
 import org.junit.Test;
+import org.springframework.batch.execution.jms.BaseJmsAwareTest;
+import org.springframework.batch.execution.jms.TextMessageCreator;
 import org.springframework.batch.execution.jms.partition.aggregation.support.CountBasedAggregationCompletionPolicy;
 import org.springframework.batch.execution.jms.partition.aggregation.support.StringAggregationItemJmsMapper;
 import org.springframework.batch.execution.jms.partition.aggregation.support.TimeBasedAggregationTimeoutPolicy;
@@ -24,7 +26,6 @@ import org.springframework.jms.core.SessionCallback;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.Message;
 import javax.jms.Session;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ import static junit.framework.Assert.*;
 /**
  * @author Stephane Nicoll
  */
-public class JmsAggregationServiceTests extends BaseJmsAggregationTest {
+public class JmsAggregationServiceTests extends BaseJmsAwareTest {
 
     private final JmsAggregationService instance = new JmsAggregationService();
 
@@ -149,29 +150,4 @@ public class JmsAggregationServiceTests extends BaseJmsAggregationTest {
     protected <T> T executeTest(SessionCallback<T> callback) {
         return extendedJmsTemplate.execute(callback, true);
     }
-
-    /**
-     * An implementation of {@link MessageCreator} which creates
-     * a {@link javax.jms.TextMessage} with a single {@link String}.
-     *
-     * @author Stephane Nicoll
-     */
-    private static class TextMessageCreator implements MessageCreator {
-
-        private final String messageContent;
-
-        /**
-         * Creates an instance with the specified content.
-         *
-         * @param messageContent the content to put in the jms message
-         */
-        public TextMessageCreator(String messageContent) {
-            this.messageContent = messageContent;
-        }
-
-        public Message createMessage(Session session) throws JMSException {
-            return session.createTextMessage(messageContent);
-        }
-    }
-
 }

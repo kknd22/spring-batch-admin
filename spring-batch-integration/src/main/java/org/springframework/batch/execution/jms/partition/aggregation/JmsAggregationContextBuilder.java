@@ -29,7 +29,7 @@ import java.util.List;
  */
 public final class JmsAggregationContextBuilder<T> {
 
-    public static final long DEFAULT_RECEIVE_TIMEOUT = 1000L;
+    public static final long DEFAULT_RECEIVE_TIMEOUT = 1000L; // 1 minute
 
     private AggregationCompletionPolicy<?> completionPolicy;
     private AggregationTimeoutPolicy timeoutPolicy;
