@@ -10,7 +10,13 @@
 		<version>1.2.1.BUILD-SNAPSHOT</version>
 		<relativePath>../spring-batch-admin-parent</relativePath>
 	</parent>
-	<dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.batch</groupId>
+            <artifactId>spring-batch-execution</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.batch</groupId>
 			<artifactId>spring-batch-core</artifactId>

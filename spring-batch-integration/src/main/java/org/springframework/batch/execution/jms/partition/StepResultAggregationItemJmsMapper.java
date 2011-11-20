@@ -16,7 +16,7 @@
 package org.springframework.batch.execution.jms.partition;
 
 
-import org.springframework.batch.execution.jms.partition.aggregation.AggregationItemJmsMapper;
+import org.springframework.batch.execution.aggregation.jms.AggregationItemJmsMapper;
 import org.springframework.batch.integration.partition.StepExecutionResult;
 
 import javax.jms.JMSException;

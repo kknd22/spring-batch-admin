@@ -17,10 +17,10 @@ package org.springframework.batch.execution.jms.partition;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.batch.execution.aggregation.core.support.TimeBasedAggregationTimeoutPolicy;
 import org.springframework.batch.execution.jms.BaseJmsAwareTest;
-import org.springframework.batch.execution.jms.partition.aggregation.AggregationTimeoutPolicy;
-import org.springframework.batch.execution.jms.partition.aggregation.support.TimeBasedAggregationTimeoutPolicy;
-import org.springframework.batch.execution.jms.partition.support.ExtendedJmsTemplate;
+import org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy;
+import org.springframework.batch.execution.support.jms.ExtendedJmsTemplate;
 import org.springframework.batch.integration.partition.StepExecutionRequest;
 import org.springframework.batch.integration.partition.StepExecutionResult;
 import org.springframework.test.context.ContextConfiguration;

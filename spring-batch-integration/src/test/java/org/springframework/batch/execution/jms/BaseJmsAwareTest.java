@@ -17,7 +17,7 @@ package org.springframework.batch.execution.jms;
 
 import org.apache.activemq.command.ActiveMQQueue;
 import org.junit.runner.RunWith;
-import org.springframework.batch.execution.jms.partition.support.ExtendedJmsTemplate;
+import org.springframework.batch.execution.support.jms.ExtendedJmsTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
