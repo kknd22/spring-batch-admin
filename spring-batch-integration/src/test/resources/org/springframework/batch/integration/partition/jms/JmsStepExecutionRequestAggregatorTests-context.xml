@@ -7,6 +7,8 @@
         Adds a fake test listener supposed to handle step execution requests
     </description>
 
+    <import resource="classpath:/jms-extended-context.xml"/>
+
     <bean name="queue/JmsStepExecutionRequestAggregatorTests" class="org.apache.activemq.command.ActiveMQQueue">
         <constructor-arg value="queue/JmsStepExecutionRequestAggregatorTests"/>
     </bean>
@@ -20,7 +22,7 @@
     </jms:listener-container>
 
     <bean id="requestAggregatorMessageListener"
-          class="org.springframework.batch.execution.jms.partition.StepExecutionRequestTestListener">
+          class="org.springframework.batch.integration.partition.StepExecutionRequestTestListener">
         <property name="jmsTemplate" ref="jmsTemplate"/>
 
     </bean>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.jms.partition;
+package org.springframework.batch.integration.partition.support;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,6 +27,7 @@ import org.springframework.batch.core.repository.dao.MapJobInstanceDao;
 import org.springframework.batch.core.repository.dao.MapStepExecutionDao;
 import org.springframework.batch.integration.partition.StepExecutionRequest;
 import org.springframework.batch.integration.partition.StepExecutionResult;
+import org.springframework.batch.integration.partition.support.StepExecutionAggregationTimeoutPolicy;
 
 import java.util.ArrayList;
 import java.util.Arrays;

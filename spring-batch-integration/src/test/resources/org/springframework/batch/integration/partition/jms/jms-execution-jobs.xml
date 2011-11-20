@@ -4,11 +4,12 @@
        xmlns:batch="http://www.springframework.org/schema/batch"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
-       http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+       http://www.springframework.org/schema/batch
+       http://www.springframework.org/schema/batch/spring-batch.xsd">
 
 
     <bean id="requestAggregator"
-          class="org.springframework.batch.execution.jms.partition.JmsStepExecutionRequestAggregator">
+          class="org.springframework.batch.integration.partition.jms.JmsStepExecutionRequestAggregator">
         <description>
             Component responsible to send the request(s) to remote workers and aggregate the result.
         </description>

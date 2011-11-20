@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.jms.partition;
+package org.springframework.batch.integration.partition.jms;
 
 
 import org.apache.commons.logging.Log;
@@ -30,6 +30,7 @@ import org.springframework.batch.execution.support.jms.ExtendedJmsTemplate;
 import org.springframework.batch.integration.partition.StepExecutionRequest;
 import org.springframework.batch.integration.partition.StepExecutionRequestAggregator;
 import org.springframework.batch.integration.partition.StepExecutionResult;
+import org.springframework.batch.integration.partition.support.StepExecutionAggregationTimeoutPolicy;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.core.SessionCallback;

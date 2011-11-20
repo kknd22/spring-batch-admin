@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.jms.partition;
+package org.springframework.batch.integration.partition.jms;
 
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.batch.execution.jms.partition.support.ReplyAwareMessageListener;
+import org.springframework.batch.execution.support.jms.ReplyAwareMessageListener;
 import org.springframework.batch.integration.partition.StepExecutionRequest;
 import org.springframework.batch.integration.partition.StepExecutionRequestHandler;
 import org.springframework.batch.integration.partition.StepExecutionResult;

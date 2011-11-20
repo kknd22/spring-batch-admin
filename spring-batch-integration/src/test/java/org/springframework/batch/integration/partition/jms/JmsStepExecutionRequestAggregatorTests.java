@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.jms.partition;
+package org.springframework.batch.integration.partition.jms;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.batch.execution.aggregation.core.support.TimeBasedAggregationTimeoutPolicy;
-import org.springframework.batch.execution.jms.BaseJmsAwareTest;
 import org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy;
+import org.springframework.batch.execution.aggregation.core.support.TimeBasedAggregationTimeoutPolicy;
 import org.springframework.batch.execution.support.jms.ExtendedJmsTemplate;
 import org.springframework.batch.integration.partition.StepExecutionRequest;
+import org.springframework.batch.integration.partition.StepExecutionRequestTestListener;
 import org.springframework.batch.integration.partition.StepExecutionResult;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
 import javax.jms.JMSException;
@@ -38,7 +39,7 @@ import java.util.concurrent.TimeoutException;
  * @author Sebastien Gerard
  */
 @ContextConfiguration
-public class JmsStepExecutionRequestAggregatorTests extends BaseJmsAwareTest {
+public class JmsStepExecutionRequestAggregatorTests {
 
     public static final String STEP_NAME = "myStep";
     public static final String REQUEST_QUEUE = "queue/JmsStepExecutionRequestAggregatorTests";
@@ -50,6 +51,8 @@ public class JmsStepExecutionRequestAggregatorTests extends BaseJmsAwareTest {
 
     protected long currentStepExecutionId = 0;
 
+    @Autowired
+    protected ExtendedJmsTemplate extendedJmsTemplate;
 
     @Test
     public void launchNoRequest() throws TimeoutException {
@@ -112,7 +115,7 @@ public class JmsStepExecutionRequestAggregatorTests extends BaseJmsAwareTest {
         return new TestContext(extendedJmsTemplate, stepExecutionTimeout, receiveTimeout);
     }
 
-    protected TestContext createDefaultTestContext()  {
+    protected TestContext createDefaultTestContext() {
         return createTestContext(DEFAULT_STEP_EXECUTION_TIMEOUT, DEFAULT_RECEIVE_TIMEOUT);
     }
 

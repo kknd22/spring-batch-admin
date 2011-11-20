@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.jms.partition;
+package org.springframework.batch.integration.partition.jms;
 
 import org.apache.activemq.command.ActiveMQObjectMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.batch.integration.partition.StepExecutionRequest;
 import org.springframework.batch.integration.partition.StepExecutionResult;
+import org.springframework.batch.integration.partition.jms.StepResultAggregationItemJmsMapper;
 
 import javax.jms.JMSException;
 import javax.jms.Message;

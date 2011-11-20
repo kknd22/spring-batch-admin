@@ -7,8 +7,8 @@
         Declares the queue and the message listener processing step execution requests
     </description>
 
-    <import resource="classpath:/org/springframework/batch/execution/jms/jms-context.xml"/>
-    <import resource="classpath:/org/springframework/batch/execution/jms/partition/partition-infrastructure-context.xml"/>
+    <import resource="classpath:/jms-extended-context.xml"/>
+    <import resource="classpath:/org/springframework/batch/integration/partition/jms/partition-infrastructure-context.xml"/>
 
 
     <bean name="queue/stepExecutionRequest" class="org.apache.activemq.command.ActiveMQQueue">
@@ -23,7 +23,7 @@
     </jms:listener-container>
 
     <bean id="messageListener"
-          class="org.springframework.batch.execution.jms.partition.StepExecutionRequestMessageListener">
+          class="org.springframework.batch.integration.partition.jms.StepExecutionRequestMessageListener">
         <property name="jmsTemplate" ref="jmsTemplate"/>
         <property name="stepExecutionRequestHandler">
             <bean class="org.springframework.batch.integration.partition.DefaultStepExecutionRequestHandler">
