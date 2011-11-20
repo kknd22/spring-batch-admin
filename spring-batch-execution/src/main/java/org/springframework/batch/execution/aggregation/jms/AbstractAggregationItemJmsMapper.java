@@ -15,23 +15,27 @@
  */
 package org.springframework.batch.execution.aggregation.jms;
 
+
+import org.springframework.batch.execution.aggregation.core.AggregationItemMapper;
+import org.springframework.batch.execution.aggregation.core.MessageConversionException;
+
 import javax.jms.JMSException;
 import javax.jms.Message;
 
 /**
- * Maps a {@link javax.jms.Message} to an aggregation item.
+ * A convenient base class for JMS-related {@link AggregationItemMapper}.
  *
  * @author Stephane Nicoll
  */
-public interface AggregationItemJmsMapper<T> {
+public abstract class AbstractAggregationItemJmsMapper<T> implements AggregationItemMapper<Message, T> {
 
-    /**
-     * Maps a {@link javax.jms.Message} to the item it contains.
-     *
-     * @param message the input message
-     * @return the item contained in the message
-     * @throws JMSException if an error occurred while manipulating the message
-     */
-    T map(Message message) throws JMSException;
+    public T map(Message message) throws MessageConversionException {
+        try {
+            return doMap(message);
+        } catch (JMSException e) {
+            throw new MessageConversionException("Failed to convert incoming jms message", e);
+        }
+    }
 
+    protected abstract T doMap(Message message) throws JMSException;
 }

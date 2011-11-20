@@ -16,7 +16,7 @@
 package org.springframework.batch.integration.partition.jms;
 
 
-import org.springframework.batch.execution.aggregation.jms.AggregationItemJmsMapper;
+import org.springframework.batch.execution.aggregation.jms.AbstractAggregationItemJmsMapper;
 import org.springframework.batch.integration.partition.StepExecutionResult;
 
 import javax.jms.JMSException;
@@ -29,9 +29,9 @@ import java.io.Serializable;
  *
  * @author Sebastien Gerard
  */
-class StepResultAggregationItemJmsMapper implements AggregationItemJmsMapper<StepExecutionResult> {
+class StepResultAggregationItemJmsMapper extends AbstractAggregationItemJmsMapper<StepExecutionResult> {
 
-    public StepExecutionResult map(Message message) throws JMSException {
+    public StepExecutionResult doMap(Message message) throws JMSException {
         if ((message != null) && message instanceof ObjectMessage) {
             final Serializable serializable = ((ObjectMessage) message).getObject();
 

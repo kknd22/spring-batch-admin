@@ -15,13 +15,11 @@
  */
 package org.springframework.batch.execution.aggregation.jms;
 
-import org.springframework.batch.execution.aggregation.core.AggregationCompletionPolicy;
-import org.springframework.batch.execution.aggregation.core.AggregationItemListener;
-import org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy;
+import org.springframework.batch.execution.aggregation.core.AggregationContext;
 
 import javax.jms.Destination;
+import javax.jms.Message;
 import javax.jms.Session;
-import java.util.Collection;
 
 /**
  * Holds the requested information to perform the aggregation.
@@ -29,35 +27,7 @@ import java.util.Collection;
  * @author Stephane Nicoll
  * @see JmsAggregationService
  */
-public interface JmsAggregationContext<T> {
-
-    /**
-     * Returns the completion policy to use.
-     *
-     * @return the completion policy
-     */
-    AggregationCompletionPolicy getCompletionPolicy();
-
-    /**
-     * Returns the timeout policy to use.
-     *
-     * @return the timeout policy
-     */
-    AggregationTimeoutPolicy getTimeoutPolicy();
-
-    /**
-     * Returns the registered {@link AggregationItemListener} implementations.
-     *
-     * @return the aggregation item listeners
-     */
-    Collection<AggregationItemListener<T>> getAggregationItemListeners();
-
-    /**
-     * Returns the aggregation item mapper to use.
-     *
-     * @return the aggregation item mapper
-     */
-    AggregationItemJmsMapper<T> getAggregationItemJmsMapper();
+public interface JmsAggregationContext<T> extends AggregationContext<Message, T> {
 
     /**
      * Returns the session to use to receive the aggregation items.

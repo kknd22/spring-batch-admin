@@ -15,60 +15,23 @@
  */
 package org.springframework.batch.execution.aggregation.jms;
 
-import org.springframework.batch.execution.aggregation.core.AggregationCompletionPolicy;
-import org.springframework.batch.execution.aggregation.core.AggregationItemListener;
-import org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy;
+import org.springframework.batch.execution.aggregation.core.support.BaseAggregationContext;
 
 import javax.jms.Destination;
+import javax.jms.Message;
 import javax.jms.Session;
-import java.util.Collection;
 
 /**
  * The default {@link JmsAggregationContext} implementation.
  *
  * @author Stephane Nicoll
  */
-class JmsAggregationContextImpl<T> implements JmsAggregationContext<T> {
+class JmsAggregationContextImpl<T> extends BaseAggregationContext<Message, T>
+        implements JmsAggregationContext<T> {
 
-    private AggregationCompletionPolicy completionPolicy;
-    private AggregationTimeoutPolicy timeoutPolicy;
-    private Collection<AggregationItemListener<T>> aggregationItemListeners;
-    private AggregationItemJmsMapper<T> aggregationItemJmsMapper;
     private Session session;
     private Destination destination;
     private long receiveTimeout;
-
-    public AggregationCompletionPolicy getCompletionPolicy() {
-        return completionPolicy;
-    }
-
-    void setCompletionPolicy(AggregationCompletionPolicy<?> completionPolicy) {
-        this.completionPolicy = completionPolicy;
-    }
-
-    public AggregationTimeoutPolicy getTimeoutPolicy() {
-        return timeoutPolicy;
-    }
-
-    void setTimeoutPolicy(AggregationTimeoutPolicy timeoutPolicy) {
-        this.timeoutPolicy = timeoutPolicy;
-    }
-
-    public Collection<AggregationItemListener<T>> getAggregationItemListeners() {
-        return aggregationItemListeners;
-    }
-
-    void setAggregationItemListeners(Collection<AggregationItemListener<T>> aggregationItemListeners) {
-        this.aggregationItemListeners = aggregationItemListeners;
-    }
-
-    public AggregationItemJmsMapper<T> getAggregationItemJmsMapper() {
-        return aggregationItemJmsMapper;
-    }
-
-    void setAggregationItemJmsMapper(AggregationItemJmsMapper<T> aggregationItemJmsMapper) {
-        this.aggregationItemJmsMapper = aggregationItemJmsMapper;
-    }
 
     public Session getSession() {
         return session;

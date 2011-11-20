@@ -20,12 +20,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.execution.aggregation.core.AggregationCompletionPolicy;
+import org.springframework.batch.execution.aggregation.core.AggregationItemMapper;
+import org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy;
 import org.springframework.batch.execution.aggregation.core.support.CountBasedAggregationCompletionPolicy;
+import org.springframework.batch.execution.aggregation.jms.JmsAggregationContext;
 import org.springframework.batch.execution.aggregation.jms.JmsAggregationContextBuilder;
 import org.springframework.batch.execution.aggregation.jms.JmsAggregationService;
-import org.springframework.batch.execution.aggregation.jms.AggregationItemJmsMapper;
-import org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy;
-import org.springframework.batch.execution.aggregation.jms.JmsAggregationContext;
 import org.springframework.batch.execution.support.jms.ExtendedJmsTemplate;
 import org.springframework.batch.integration.partition.StepExecutionRequest;
 import org.springframework.batch.integration.partition.StepExecutionRequestAggregator;
@@ -163,7 +163,7 @@ public class JmsStepExecutionRequestAggregator implements StepExecutionRequestAg
      * @param requests the requests to aggregate
      * @return a new mapper instance
      */
-    protected AggregationItemJmsMapper<StepExecutionResult> createAggregationMapper(List<StepExecutionRequest> requests) {
+    protected AggregationItemMapper<Message, StepExecutionResult> createAggregationMapper(List<StepExecutionRequest> requests) {
         return new StepResultAggregationItemJmsMapper();
     }
 

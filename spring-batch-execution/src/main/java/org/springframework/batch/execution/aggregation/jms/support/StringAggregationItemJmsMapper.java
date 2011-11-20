@@ -15,7 +15,7 @@
  */
 package org.springframework.batch.execution.aggregation.jms.support;
 
-import org.springframework.batch.execution.aggregation.jms.AggregationItemJmsMapper;
+import org.springframework.batch.execution.aggregation.jms.AbstractAggregationItemJmsMapper;
 import org.springframework.util.Assert;
 
 import javax.jms.JMSException;
@@ -27,9 +27,9 @@ import javax.jms.TextMessage;
  *
  * @author Stephane Nicoll
  */
-public class StringAggregationItemJmsMapper implements AggregationItemJmsMapper<String> {
+public class StringAggregationItemJmsMapper extends AbstractAggregationItemJmsMapper<String> {
 
-    public String map(Message message) throws JMSException {
+    public String doMap(Message message) throws JMSException {
         Assert.notNull(message, "message could not be null.");
         if (message instanceof TextMessage) {
             return ((TextMessage) message).getText();

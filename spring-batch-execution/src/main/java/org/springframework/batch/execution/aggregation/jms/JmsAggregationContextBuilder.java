@@ -15,29 +15,23 @@
  */
 package org.springframework.batch.execution.aggregation.jms;
 
-import org.springframework.batch.execution.aggregation.core.AggregationCompletionPolicy;
-import org.springframework.batch.execution.aggregation.core.AggregationItemListener;
-import org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy;
+import org.springframework.batch.execution.aggregation.core.support.BaseAggregationContextBuilder;
 import org.springframework.util.Assert;
 
 import javax.jms.Destination;
+import javax.jms.Message;
 import javax.jms.Session;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Builds {@link JmsAggregationContext} instances.
  *
  * @author Stephane Nicoll
  */
-public final class JmsAggregationContextBuilder<T> {
+public final class JmsAggregationContextBuilder<T>
+        extends BaseAggregationContextBuilder<Message, T, JmsAggregationContextBuilder<T>> {
 
     public static final long DEFAULT_RECEIVE_TIMEOUT = 1000L; // 1 minute
 
-    private AggregationCompletionPolicy<?> completionPolicy;
-    private AggregationTimeoutPolicy timeoutPolicy;
-    private final List<AggregationItemListener<T>> aggregationItemListeners;
-    private AggregationItemJmsMapper<T> aggregationItemJmsMapper;
     private Session session;
     private Destination destination;
     private long receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
@@ -47,7 +41,11 @@ public final class JmsAggregationContextBuilder<T> {
         Assert.notNull(destination, "destination could not be null.");
         this.session = session;
         this.destination = destination;
-        this.aggregationItemListeners = new ArrayList<AggregationItemListener<T>>();
+    }
+
+    @Override
+    protected JmsAggregationContextBuilder<T> self() {
+        return this;
     }
 
     /**
@@ -62,56 +60,6 @@ public final class JmsAggregationContextBuilder<T> {
     public static <T> JmsAggregationContextBuilder<T> forDestination(Class<T> resultType,
                                                                      Session session, Destination destination) {
         return new JmsAggregationContextBuilder<T>(session, destination);
-    }
-
-    /**
-     * Specifies the {@link AggregationCompletionPolicy} to use. Note that the policy
-     * is automatically registered as a item listener.
-     *
-     * @param completionPolicy the completion policy to use
-     * @return the builder for method chaining
-     */
-    public JmsAggregationContextBuilder<T> withCompletionPolicy(AggregationCompletionPolicy<?> completionPolicy) {
-        this.completionPolicy = completionPolicy;
-        return this;
-    }
-
-    /**
-     * Specifies the {@link AggregationTimeoutPolicy} to use. Note that the policy
-     * is automatically registered as an item listener if it implements the
-     * {@link AggregationItemListener} interface.
-     *
-     * @param timeoutPolicy the timeout policy to use
-     * @return the builder for method chaining
-     */
-    public JmsAggregationContextBuilder<T> withTimeoutPolicy(AggregationTimeoutPolicy timeoutPolicy) {
-        this.timeoutPolicy = timeoutPolicy;
-        return this;
-    }
-
-    /**
-     * Registers the specified {@link AggregationItemListener}. If the listener is already
-     * registered, does nothing.
-     *
-     * @param listener the listener to register
-     * @return the builder for method chaining
-     */
-    public JmsAggregationContextBuilder<T> withAggregationItemListener(AggregationItemListener<T> listener) {
-        if (!aggregationItemListeners.contains(listener)) {
-            aggregationItemListeners.add(listener);
-        }
-        return this;
-    }
-
-    /**
-     * Specifies the {@link AggregationItemJmsMapper} to use.
-     *
-     * @param mapper the mapper to use
-     * @return the builder for method chaining
-     */
-    public JmsAggregationContextBuilder<T> withAggregationItemMapper(AggregationItemJmsMapper<T> mapper) {
-        this.aggregationItemJmsMapper = mapper;
-        return this;
     }
 
     /**
@@ -130,41 +78,19 @@ public final class JmsAggregationContextBuilder<T> {
     }
 
     /**
-     * Builds the context. Validates that each mandatory property is set.
+     * Builds the context.
      *
      * @return the context
      */
     public JmsAggregationContext<T> build() {
-        Assert.notNull(completionPolicy, "completion policy could not be null.");
-        Assert.notNull(timeoutPolicy, "timeout policy could not be null.");
-        Assert.notNull(aggregationItemJmsMapper, "the aggregation item mapper could not be null.");
-
-        // Register the listeners if necessary
-        final List<AggregationItemListener<T>> listeners =
-                new ArrayList<AggregationItemListener<T>>(aggregationItemListeners);
-        addAggregationItemListenerIfNecessary(listeners, completionPolicy);
-        addAggregationItemListenerIfNecessary(listeners, timeoutPolicy);
-
         final JmsAggregationContextImpl<T> context = new JmsAggregationContextImpl<T>();
+        doBuild(context);
+
         context.setSession(session);
         context.setDestination(destination);
-        context.setCompletionPolicy(completionPolicy);
-        context.setTimeoutPolicy(timeoutPolicy);
-        context.setAggregationItemListeners(listeners);
-        context.setAggregationItemJmsMapper(aggregationItemJmsMapper);
         context.setReceiveTimeout(receiveTimeout);
 
         return context;
-    }
-
-    @SuppressWarnings({"unchecked"})
-    private void addAggregationItemListenerIfNecessary(List<AggregationItemListener<T>> listeners, Object o) {
-        if (o instanceof AggregationItemListener) {
-            final AggregationItemListener<T> listener = (AggregationItemListener<T>) o;
-            if (!listeners.contains(listener)) {
-                listeners.add(listener);
-            }
-        }
     }
 
 }

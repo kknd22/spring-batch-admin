@@ -21,7 +21,6 @@ import org.springframework.batch.core.listener.OrderedComposite;
 import org.springframework.batch.execution.aggregation.core.AggregationItemListener;
 import org.springframework.jms.listener.adapter.ListenerExecutionFailedException;
 import org.springframework.jms.support.JmsUtils;
-import org.springframework.jms.support.converter.MessageConversionException;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -38,7 +37,7 @@ import java.util.concurrent.TimeoutException;
  * @author Stephane Nicoll
  * @see org.springframework.batch.execution.aggregation.core.AggregationCompletionPolicy
  * @see org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy
- * @see AggregationItemJmsMapper
+ * @see org.springframework.batch.execution.aggregation.core.AggregationItemMapper
  * @see JmsAggregationContextBuilder
  */
 public class JmsAggregationService {
@@ -77,15 +76,11 @@ public class JmsAggregationService {
                 logger.debug("Waiting for message on [" + context.getDestination() + "]");
                 final Message input = consumer.receive(context.getReceiveTimeout());
                 if (input != null) {
-                    try {
-                        logger.debug("Input message received.");
-                        final T item = context.getAggregationItemJmsMapper().map(input);
-                        // Call back whatever the input is here
-                        onItemRegistration(orderedListeners, item);
-                        items.add(item);
-                    } catch (JMSException e) {
-                        throw new MessageConversionException("Failed to convert input message to item", e);
-                    }
+                    logger.debug("Input message received.");
+                    final T item = context.getAggregationItemMapper().map(input);
+                    // Call back whatever the input is here
+                    onItemRegistration(orderedListeners, item);
+                    items.add(item);
                 } else if (context.getTimeoutPolicy().shouldTimeout(startTime)) {
                     // Check if we have have reached our timeout
                     final long delta = System.currentTimeMillis() - startTime;
