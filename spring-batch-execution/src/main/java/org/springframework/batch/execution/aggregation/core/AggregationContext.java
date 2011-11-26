@@ -20,6 +20,8 @@ import java.util.Collection;
 /**
  * The context used by the aggregation service.
  *
+ * @param <M> the type of the message
+ * @param <T> the type hold in the message
  * @author Stephane Nicoll
  */
 public interface AggregationContext<M, T> {
@@ -51,4 +53,11 @@ public interface AggregationContext<M, T> {
      * @return the aggregation item mapper
      */
     AggregationItemMapper<M, T> getAggregationItemMapper();
+
+    /**
+     * Returns the receive timeout to use when listening for incoming messages.
+     *
+     * @return the receive timeout, in ms
+     */
+    long getReceiveTimeout();
 }

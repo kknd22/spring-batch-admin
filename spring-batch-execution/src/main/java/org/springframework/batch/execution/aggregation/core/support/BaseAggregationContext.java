@@ -34,6 +34,7 @@ public class BaseAggregationContext<M, T> implements AggregationContext<M, T> {
     private AggregationTimeoutPolicy timeoutPolicy;
     private Collection<AggregationItemListener<T>> aggregationItemListeners;
     private AggregationItemMapper<M, T> aggregationItemMapper;
+    private long receiveTimeout;
 
     public AggregationCompletionPolicy getCompletionPolicy() {
         return completionPolicy;
@@ -65,6 +66,14 @@ public class BaseAggregationContext<M, T> implements AggregationContext<M, T> {
 
     public void setAggregationItemMapper(AggregationItemMapper<M, T> aggregationItemMapper) {
         this.aggregationItemMapper = aggregationItemMapper;
+    }
+
+    public long getReceiveTimeout() {
+        return receiveTimeout;
+    }
+
+    void setReceiveTimeout(long receiveTimeout) {
+        this.receiveTimeout = receiveTimeout;
     }
 
 }

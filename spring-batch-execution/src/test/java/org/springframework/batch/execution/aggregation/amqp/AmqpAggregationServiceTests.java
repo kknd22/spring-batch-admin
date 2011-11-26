@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.aggregation.jms;
+package org.springframework.batch.execution.aggregation.amqp;
 
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
-import org.springframework.batch.execution.BaseExecutionJmsTest;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.core.ChannelCallback;
+import org.springframework.amqp.support.converter.SerializerMessageConverter;
+import org.springframework.batch.execution.BaseExecutionAmqpTest;
+import org.springframework.batch.execution.aggregation.amqp.support.StringAggregationItemAmqpMapper;
 import org.springframework.batch.execution.aggregation.core.AggregationItemListener;
 import org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy;
 import org.springframework.batch.execution.aggregation.core.support.CountBasedAggregationCompletionPolicy;
 import org.springframework.batch.execution.aggregation.core.support.TimeBasedAggregationTimeoutPolicy;
-import org.springframework.batch.execution.aggregation.jms.support.StringAggregationItemJmsMapper;
 import org.springframework.batch.execution.aggregation.test.AggregationItemTestListener;
-import org.springframework.batch.execution.support.jms.TextMessageCreator;
-import org.springframework.jms.core.MessageCreator;
-import org.springframework.jms.core.SessionCallback;
 
-import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.Session;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -39,17 +43,20 @@ import static junit.framework.Assert.*;
 /**
  * @author Stephane Nicoll
  */
-public class JmsAggregationServiceTests extends BaseExecutionJmsTest {
+public class AmqpAggregationServiceTests extends BaseExecutionAmqpTest {
 
-    private final JmsAggregationService instance = new JmsAggregationService();
+    private final Log logger = LogFactory.getLog(AmqpAggregationServiceTests.class);
+
+    private final SerializerMessageConverter messageConverter = new SerializerMessageConverter();
+    private final AmqpAggregationService instance = new AmqpAggregationService();
 
     @Test
     public void sendOneMessageAndExpectOne() {
-        executeTest(new SessionCallback<List<String>>() {
-            public List<String> doInJms(Session session) throws JMSException {
-                final Destination destination = sendMessagesOnTemporaryDestination(session, "Test1");
+        executeTest(new ChannelCallback<List<String>>() {
+            public List<String> doInRabbit(Channel channel) throws Exception {
+                final String destination = sendMessagesOnTemporaryDestination(channel, "Test1");
 
-                final JmsAggregationContext<String> context = createContext(session, destination, 1,
+                final AmqpAggregationContext<String> context = createContext(channel, destination, 1,
                         new TimeBasedAggregationTimeoutPolicy(200L));
 
                 try {
@@ -65,12 +72,12 @@ public class JmsAggregationServiceTests extends BaseExecutionJmsTest {
 
     @Test
     public void sendOneMessageCallTheRegistrationListenerOnce() {
-        executeTest(new SessionCallback<List<String>>() {
-            public List<String> doInJms(Session session) throws JMSException {
-                final Destination destination = sendMessagesOnTemporaryDestination(session, "Test1");
+        executeTest(new ChannelCallback<List<String>>() {
+            public List<String> doInRabbit(Channel channel) throws Exception {
+                final String destination = sendMessagesOnTemporaryDestination(channel, "Test1");
 
                 final AggregationItemTestListener listener = new AggregationItemTestListener(1);
-                final JmsAggregationContext<String> context = createContext(session, destination, 1,
+                final AmqpAggregationContext<String> context = createContext(channel, destination, 1,
                         new TimeBasedAggregationTimeoutPolicy(200L), listener);
 
                 try {
@@ -88,11 +95,11 @@ public class JmsAggregationServiceTests extends BaseExecutionJmsTest {
 
     @Test
     public void sendOneMessageAndExpectTwo() {
-        executeTest(new SessionCallback<List<String>>() {
-            public List<String> doInJms(Session session) throws JMSException {
-                final Destination destination = sendMessagesOnTemporaryDestination(session, "Test1");
+        executeTest(new ChannelCallback<List<String>>() {
+            public List<String> doInRabbit(Channel channel) throws Exception {
+                final String destination = sendMessagesOnTemporaryDestination(channel, "Test1");
 
-                final JmsAggregationContext<String> context = createContext(session, destination, 2,
+                final AmqpAggregationContext<String> context = createContext(channel, destination, 2,
                         new TimeBasedAggregationTimeoutPolicy(200L));
 
                 try {
@@ -117,13 +124,13 @@ public class JmsAggregationServiceTests extends BaseExecutionJmsTest {
     }
 
     @SuppressWarnings({"unchecked"})
-    protected JmsAggregationContext<String> createContext(Session session, Destination destination,
-                                                          int expectedMessageCount,
-                                                          AggregationTimeoutPolicy timeoutPolicy,
-                                                          AggregationItemListener<?>... aggregationItemListeners) {
-        final JmsAggregationContextBuilder<String> builder = JmsAggregationContextBuilder
-                .forDestination(String.class, session, destination)
-                .withAggregationItemMapper(new StringAggregationItemJmsMapper())
+    protected AmqpAggregationContext<String> createContext(Channel channel, String destination,
+                                                           int expectedMessageCount,
+                                                           AggregationTimeoutPolicy timeoutPolicy,
+                                                           AggregationItemListener<?>... aggregationItemListeners) {
+        final AmqpAggregationContextBuilder<String> builder = AmqpAggregationContextBuilder
+                .forDestination(String.class, channel, destination)
+                .withAggregationItemMapper(new StringAggregationItemAmqpMapper())
                 .withTimeoutPolicy(timeoutPolicy)
                 .withCompletionPolicy(
                         new CountBasedAggregationCompletionPolicy(expectedMessageCount));
@@ -134,23 +141,43 @@ public class JmsAggregationServiceTests extends BaseExecutionJmsTest {
     }
 
 
-    protected Destination sendMessagesOnTemporaryDestination(Session session, String... content)
-            throws JMSException {
-        final List<MessageCreator> messageCreators = new ArrayList<MessageCreator>();
-        for (String s : content) {
-            messageCreators.add(new TextMessageCreator(s));
-        }
+    protected String sendMessagesOnTemporaryDestination(Channel channel, String... content)
+            throws JMSException, IOException {
 
         // Create a temp destination
-        final Destination destination = session.createTemporaryQueue();
+        final String destination = createTemporaryQueue(channel);
 
-        // Sends the messages
-        extendedJmsTemplate.send(messageCreators, session, destination);
+        final List<Message> amqpMessages = new ArrayList<Message>();
+        for (String message : content) {
+            final Message m = toMessage(message);
+            amqpMessages.add(m);
+        }
+        logger.debug("Sending [" + amqpMessages.size() + "] message(s).");
+        extendedAmqpTemplate.send(amqpMessages, channel, null, destination);
 
         return destination;
     }
 
-    protected <T> T executeTest(SessionCallback<T> callback) {
-        return extendedJmsTemplate.execute(callback, true);
+    protected <T> T executeTest(ChannelCallback<T> callback) {
+        return extendedAmqpTemplate.execute(callback);
     }
+
+
+    /**
+     * Creates a temporary queue for the specified {@link Channel}.
+     *
+     * @param channel the channel to use
+     * @return the name of a temporary queue
+     * @throws IOException if the queue could not be created
+     */
+    private String createTemporaryQueue(final Channel channel) throws IOException {
+        AMQP.Queue.DeclareOk queueDeclaration = channel.queueDeclare();
+        return queueDeclaration.getQueue();
+    }
+
+    private Message toMessage(String input) {
+        return messageConverter.toMessage(input, new MessageProperties());
+    }
+
+
 }

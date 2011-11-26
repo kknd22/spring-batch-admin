@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.aggregation.jms;
+package org.springframework.batch.execution.aggregation.test;
 
 import org.springframework.batch.execution.aggregation.core.AggregationItemListener;
 

@@ -16,21 +16,19 @@
 package org.springframework.batch.execution.aggregation.jms.support;
 
 import org.springframework.batch.execution.aggregation.jms.AbstractAggregationItemJmsMapper;
-import org.springframework.util.Assert;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
 
 /**
- * Maps the body of a {@link javax.jms.TextMessage} to a simple <tt>String</tt>.
+ * Maps the body of a {@link TextMessage} to a simple <tt>String</tt>.
  *
  * @author Stephane Nicoll
  */
 public class StringAggregationItemJmsMapper extends AbstractAggregationItemJmsMapper<String> {
 
     public String doMap(Message message) throws JMSException {
-        Assert.notNull(message, "message could not be null.");
         if (message instanceof TextMessage) {
             return ((TextMessage) message).getText();
         } else {

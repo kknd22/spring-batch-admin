@@ -18,6 +18,7 @@ package org.springframework.batch.execution.aggregation.jms;
 
 import org.springframework.batch.execution.aggregation.core.AggregationItemMapper;
 import org.springframework.batch.execution.aggregation.core.MessageConversionException;
+import org.springframework.util.Assert;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -30,6 +31,7 @@ import javax.jms.Message;
 public abstract class AbstractAggregationItemJmsMapper<T> implements AggregationItemMapper<Message, T> {
 
     public T map(Message message) throws MessageConversionException {
+        Assert.notNull(message, "message could not be null.");
         try {
             return doMap(message);
         } catch (JMSException e) {
@@ -37,5 +39,12 @@ public abstract class AbstractAggregationItemJmsMapper<T> implements Aggregation
         }
     }
 
+    /**
+     * Maps the specified message.
+     *
+     * @param message the jms message (never null)
+     * @return the mapped item
+     * @throws JMSException if the message could not be read properly
+     */
     protected abstract T doMap(Message message) throws JMSException;
 }

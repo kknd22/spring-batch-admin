@@ -49,7 +49,7 @@ public class ExtendedJmsTemplate extends JmsTemplate {
      * Sends the messages produced by the specified list of {@link MessageCreator}
      * instances on the specified {@link Destination}.
      * <p/>
-     * The caller is responsible to manage the lifecycle of the {@link Session}.
+     * The caller is responsible to manage the life cycle of the {@link Session}.
      *
      * @param messageCreators the message creators to use
      * @param session the session to use

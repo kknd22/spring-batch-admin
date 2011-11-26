@@ -32,10 +32,14 @@ import java.util.List;
  */
 public abstract class BaseAggregationContextBuilder<M, T, B extends BaseAggregationContextBuilder<M, T, B>> {
 
+    public static final long DEFAULT_RECEIVE_TIMEOUT = 1000L; // 1 sec
+
     private AggregationCompletionPolicy<?> completionPolicy;
     private AggregationTimeoutPolicy timeoutPolicy;
     private final List<AggregationItemListener<T>> aggregationItemListeners;
     private AggregationItemMapper<M, T> aggregationItemMapper;
+    private long receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
+
 
     /**
      * Creates an empty instance.
@@ -95,6 +99,21 @@ public abstract class BaseAggregationContextBuilder<M, T, B extends BaseAggregat
     }
 
     /**
+     * Specifies the timeout to use when receiving a message. Use 0 to never timeout which
+     * can be dangerous in case the message never arrives.
+     * <p/>
+     * If not specified, the default timeout is one sec (1000 ms)
+     *
+     * @param receiveTimeout the receive timeout to use
+     * @return the builder for method chaining
+     */
+    public B withReceiveTimeout(long receiveTimeout) {
+        Assert.state(receiveTimeout >= 0, "receiveTimeout must be positive.");
+        this.receiveTimeout = receiveTimeout;
+        return self();
+    }
+
+    /**
      * Returns the instance of this builder, for method chaining purposes.
      *
      * @return this
@@ -123,6 +142,7 @@ public abstract class BaseAggregationContextBuilder<M, T, B extends BaseAggregat
         context.setTimeoutPolicy(timeoutPolicy);
         context.setAggregationItemListeners(listeners);
         context.setAggregationItemMapper(aggregationItemMapper);
+        context.setReceiveTimeout(receiveTimeout);
     }
 
     @SuppressWarnings({"unchecked"})

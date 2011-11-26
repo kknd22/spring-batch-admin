@@ -35,14 +35,9 @@ import static junit.framework.Assert.*;
  */
 public class JmsAggregationContextBuilderTests extends BaseExecutionJmsTest {
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void builderWithNullSession() {
-        try {
-            JmsAggregationContextBuilder.forDestination(String.class, null, queueA);
-            fail("Failed to create builder with a null session.");
-        } catch (IllegalArgumentException e) {
-            // OK
-        }
+        JmsAggregationContextBuilder.forDestination(String.class, null, queueA);
     }
 
     @Test

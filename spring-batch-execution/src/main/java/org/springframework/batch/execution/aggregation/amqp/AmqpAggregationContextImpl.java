@@ -13,39 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.aggregation.jms;
+package org.springframework.batch.execution.aggregation.amqp;
 
+import com.rabbitmq.client.Channel;
+import org.springframework.amqp.core.Message;
 import org.springframework.batch.execution.aggregation.core.support.BaseAggregationContext;
 
-import javax.jms.Destination;
-import javax.jms.Message;
-import javax.jms.Session;
-
 /**
- * The default {@link JmsAggregationContext} implementation.
+ * The default {@link AmqpAggregationContext} implementation.
  *
  * @author Stephane Nicoll
  */
-class JmsAggregationContextImpl<T> extends BaseAggregationContext<Message, T>
-        implements JmsAggregationContext<T> {
+class AmqpAggregationContextImpl<T> extends BaseAggregationContext<Message, T>
+        implements AmqpAggregationContext<T> {
 
-    private Session session;
-    private Destination destination;
+    private Channel channel;
+    private String destination;
+    private String encoding;
 
-    public Session getSession() {
-        return session;
+    public Channel getChannel() {
+        return channel;
     }
 
-    void setSession(Session session) {
-        this.session = session;
+    public void setChannel(Channel channel) {
+        this.channel = channel;
     }
 
-    public Destination getDestination() {
+    public String getDestination() {
         return destination;
     }
 
-    void setDestination(Destination destination) {
+    public void setDestination(String destination) {
         this.destination = destination;
     }
 
+    public String getEncoding() {
+        return encoding;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
 }

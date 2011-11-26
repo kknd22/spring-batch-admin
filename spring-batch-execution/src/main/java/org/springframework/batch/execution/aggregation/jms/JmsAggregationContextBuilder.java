@@ -30,11 +30,8 @@ import javax.jms.Session;
 public final class JmsAggregationContextBuilder<T>
         extends BaseAggregationContextBuilder<Message, T, JmsAggregationContextBuilder<T>> {
 
-    public static final long DEFAULT_RECEIVE_TIMEOUT = 1000L; // 1 minute
-
-    private Session session;
-    private Destination destination;
-    private long receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
+    private final Session session;
+    private final Destination destination;
 
     private JmsAggregationContextBuilder(Session session, Destination destination) {
         Assert.notNull(session, "session could not be null.");
@@ -63,21 +60,6 @@ public final class JmsAggregationContextBuilder<T>
     }
 
     /**
-     * Specifies the timeout to use when receiving a jms message. Use 0 to never timeout which
-     * can be dangerous in case the message never arrives.
-     * <p/>
-     * If not specified, the default timeout is one sec (1000 ms)
-     *
-     * @param receiveTimeout the receive timeout to use
-     * @return the builder for method chaining
-     */
-    public JmsAggregationContextBuilder<T> withReceiveTimeout(long receiveTimeout) {
-        Assert.state(receiveTimeout >= 0, "receiveTimeout must be positive.");
-        this.receiveTimeout = receiveTimeout;
-        return this;
-    }
-
-    /**
      * Builds the context.
      *
      * @return the context
@@ -88,7 +70,6 @@ public final class JmsAggregationContextBuilder<T>
 
         context.setSession(session);
         context.setDestination(destination);
-        context.setReceiveTimeout(receiveTimeout);
 
         return context;
     }

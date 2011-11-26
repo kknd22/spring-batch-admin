@@ -13,36 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.aggregation.jms;
+package org.springframework.batch.execution.aggregation.amqp;
 
+import com.rabbitmq.client.Channel;
+import org.springframework.amqp.core.Message;
 import org.springframework.batch.execution.aggregation.core.AggregationContext;
 
-import javax.jms.Destination;
-import javax.jms.Message;
-import javax.jms.Session;
-
 /**
- * Holds the requested information to perform the aggregation using JMS.
+ * Holds the requested information to perform the aggregation using AMQP.
  *
  * @author Stephane Nicoll
- * @see JmsAggregationService
  */
-public interface JmsAggregationContext<T> extends AggregationContext<Message, T> {
+public interface AmqpAggregationContext<T> extends AggregationContext<Message, T> {
 
     /**
-     * Returns the session to use to receive the aggregation items.
+     * Returns the {@link Channel} to use to receive the aggregation items.
      *
-     * @return the session to use
+     * @return the channel to use
      */
-    Session getSession();
+    Channel getChannel();
 
     /**
-     * Returns the {@link javax.jms.Destination} to use to listen for aggregation item.
+     * Returns the destination to use to listen for aggregation item.
      *
      * @return the destination
      */
-    Destination getDestination();
+    String getDestination();
 
-
+    /**
+     * Returns the encoding to use for incoming messages.
+     *
+     * @return the encoding to use
+     */
+    String getEncoding();
 
 }
+
+
