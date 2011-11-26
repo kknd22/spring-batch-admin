@@ -15,29 +15,37 @@
  */
 package org.springframework.batch.execution.aggregation.amqp.support;
 
+import org.junit.Test;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
-import org.springframework.batch.execution.aggregation.amqp.AbstractAggregationItemAmqpMapper;
 
-import java.io.IOException;
+import static junit.framework.Assert.assertEquals;
 
 /**
- * Maps the body of a {@link Message} to a simple <tt>String</tt>.
- *
  * @author Stephane Nicoll
  */
-public class StringAggregationItemAmqpMapper extends AbstractAggregationItemAmqpMapper<String> {
+public class StringAggregationItemAmqpMapperTests {
 
     private final MessageConverter messageConverter = new SimpleMessageConverter();
+    private final StringAggregationItemAmqpMapper instance = new StringAggregationItemAmqpMapper();
 
-    @Override
-    protected String doMap(Message message) throws IOException {
-        final Object o = messageConverter.fromMessage(message);
-        if (o instanceof String) {
-            return (String) o;
-        } else {
-            throw new IllegalArgumentException("Expected String message but got [" + o + "]");
-        }
+    @Test
+    public void mapString() {
+        final String content = "foo";
+        assertEquals(content, instance.map(createMessage(content)));
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void mapOtherObject() {
+        instance.map(createMessage(new Object()));
+    }
+
+
+    protected Message createMessage(Object o) {
+        return messageConverter.toMessage(o, new MessageProperties());
+    }
+
+
 }

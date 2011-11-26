@@ -13,38 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.aggregation.jms;
+package org.springframework.batch.execution.aggregation.amqp;
 
+import com.rabbitmq.client.Channel;
 import org.junit.Test;
-import org.springframework.batch.execution.BaseExecutionJmsTest;
+import org.springframework.amqp.rabbit.core.ChannelCallback;
+import org.springframework.batch.execution.BaseExecutionAmqpTest;
+import org.springframework.batch.execution.aggregation.amqp.support.StringAggregationItemAmqpMapper;
 import org.springframework.batch.execution.aggregation.core.AggregationCompletionPolicy;
 import org.springframework.batch.execution.aggregation.core.support.CountBasedAggregationCompletionPolicy;
 import org.springframework.batch.execution.aggregation.core.support.TimeBasedAggregationTimeoutPolicy;
-import org.springframework.batch.execution.aggregation.jms.support.StringAggregationItemJmsMapper;
 import org.springframework.batch.execution.aggregation.test.ExtendedAggregationTimeoutPolity;
-import org.springframework.jms.core.SessionCallback;
-
-import javax.jms.JMSException;
-import javax.jms.Session;
 
 import static junit.framework.Assert.*;
 
 /**
  * @author Stephane Nicoll
  */
-public class JmsAggregationContextBuilderTests extends BaseExecutionJmsTest {
+public class AmqpAggregationContextBuilderTests extends BaseExecutionAmqpTest {
+
+    private final String replyQueue = "replyQueue";
+
 
     @Test(expected = IllegalArgumentException.class)
     public void builderWithNullSession() {
-        JmsAggregationContextBuilder.forDestination(String.class, null, queueA);
+        AmqpAggregationContextBuilder.forDestination(String.class, null, replyQueue);
     }
 
     @Test
     public void builderWithNullDestination() {
-        extendedJmsTemplate.execute(new SessionCallback<Object>() {
-            public Object doInJms(Session session) throws JMSException {
+        extendedAmqpTemplate.execute(new ChannelCallback<Object>() {
+            public Object doInRabbit(Channel channel) throws Exception {
                 try {
-                    JmsAggregationContextBuilder.forDestination(String.class, session, null);
+                    AmqpAggregationContextBuilder.forDestination(String.class, channel, null);
                     fail("Failed to create builder with a null destination.");
                 } catch (IllegalArgumentException e) {
                     // OK
@@ -56,11 +57,11 @@ public class JmsAggregationContextBuilderTests extends BaseExecutionJmsTest {
 
     @Test
     public void builderWithNullCompletionPolicy() {
-        extendedJmsTemplate.execute(new SessionCallback<Object>() {
-            public Object doInJms(Session session) throws JMSException {
+        extendedAmqpTemplate.execute(new ChannelCallback<Object>() {
+            public Object doInRabbit(Channel channel) throws Exception {
                 try {
-                    JmsAggregationContextBuilder
-                            .forDestination(String.class, session, queueA)
+                    AmqpAggregationContextBuilder
+                            .forDestination(String.class, channel, replyQueue)
                             .build();
                     fail("Failed to create builder with a null completion policy.");
                 } catch (IllegalArgumentException e) {
@@ -73,11 +74,11 @@ public class JmsAggregationContextBuilderTests extends BaseExecutionJmsTest {
 
     @Test
     public void builderWithNullTimeoutPolicy() {
-        extendedJmsTemplate.execute(new SessionCallback<Object>() {
-            public Object doInJms(Session session) throws JMSException {
+        extendedAmqpTemplate.execute(new ChannelCallback<Object>() {
+            public Object doInRabbit(Channel channel) throws Exception {
                 try {
-                    JmsAggregationContextBuilder
-                            .forDestination(String.class, session, queueA)
+                    AmqpAggregationContextBuilder
+                            .forDestination(String.class, channel, replyQueue)
                             .withCompletionPolicy(new CountBasedAggregationCompletionPolicy(1))
                             .build();
                     fail("Failed to create builder with a null timeout policy.");
@@ -91,11 +92,11 @@ public class JmsAggregationContextBuilderTests extends BaseExecutionJmsTest {
 
     @Test
     public void builderWithNullAggregationItemMapper() {
-        extendedJmsTemplate.execute(new SessionCallback<Object>() {
-            public Object doInJms(Session session) throws JMSException {
+        extendedAmqpTemplate.execute(new ChannelCallback<Object>() {
+            public Object doInRabbit(Channel channel) throws Exception {
                 try {
-                    JmsAggregationContextBuilder
-                            .forDestination(String.class, session, queueA)
+                    AmqpAggregationContextBuilder
+                            .forDestination(String.class, channel, replyQueue)
                             .withCompletionPolicy(new CountBasedAggregationCompletionPolicy(1))
                             .withTimeoutPolicy(new TimeBasedAggregationTimeoutPolicy(1000))
                             .build();
@@ -115,14 +116,25 @@ public class JmsAggregationContextBuilderTests extends BaseExecutionJmsTest {
 
     @Test
     public void builderWithReceiveTimeout() {
-        final JmsAggregationContext<String> context = initializeDefaultBuilder().withReceiveTimeout(100).build();
+        final AmqpAggregationContext<String> context = initializeDefaultBuilder().withReceiveTimeout(100).build();
         assertEquals(100L, context.getReceiveTimeout());
+    }
+
+    @Test
+    public void builderWithEncoding() {
+        final AmqpAggregationContext<String> context = initializeDefaultBuilder().withEncoding("ISO-8859-1").build();
+        assertEquals("ISO-8859-1", context.getEncoding());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void builderWithNullEncoding() {
+        initializeDefaultBuilder().withEncoding(null);
     }
 
     @Test
     public void ensureCompletionPolicyIsRegisteredAsAListener() {
         final AggregationCompletionPolicy policy = new CountBasedAggregationCompletionPolicy(1);
-        final JmsAggregationContext<String> context = initializeDefaultBuilder().withCompletionPolicy(policy).build();
+        final AmqpAggregationContext<String> context = initializeDefaultBuilder().withCompletionPolicy(policy).build();
         assertTrue("Completion policy should have been registered as a listener",
                 context.getAggregationItemListeners().contains(policy));
     }
@@ -130,7 +142,7 @@ public class JmsAggregationContextBuilderTests extends BaseExecutionJmsTest {
     @Test
     public void ensureTimeoutPolicyIsRegisteredAsAListenerIfApplicable() {
         final ExtendedAggregationTimeoutPolity policy = new ExtendedAggregationTimeoutPolity();
-        final JmsAggregationContext<String> context = initializeDefaultBuilder().withTimeoutPolicy(policy).build();
+        final AmqpAggregationContext<String> context = initializeDefaultBuilder().withTimeoutPolicy(policy).build();
         assertTrue("Timeout policy should have been registered as a listener if it implements the listener interface",
                 context.getAggregationItemListeners().contains(policy));
     }
@@ -146,17 +158,16 @@ public class JmsAggregationContextBuilderTests extends BaseExecutionJmsTest {
 
     }
 
-    protected JmsAggregationContextBuilder<String> initializeDefaultBuilder() {
-        return extendedJmsTemplate.execute(new SessionCallback<JmsAggregationContextBuilder<String>>() {
-            public JmsAggregationContextBuilder<String> doInJms(Session session) throws JMSException {
-                return JmsAggregationContextBuilder
-                        .forDestination(String.class, session, queueA)
+    protected AmqpAggregationContextBuilder<String> initializeDefaultBuilder() {
+        return extendedAmqpTemplate.execute(new ChannelCallback<AmqpAggregationContextBuilder<String>>() {
+            public AmqpAggregationContextBuilder<String> doInRabbit(Channel channel) throws Exception {
+                return AmqpAggregationContextBuilder
+                        .forDestination(String.class, channel, replyQueue)
                         .withCompletionPolicy(new CountBasedAggregationCompletionPolicy(1))
                         .withTimeoutPolicy(new TimeBasedAggregationTimeoutPolicy(1000))
-                        .withAggregationItemMapper(new StringAggregationItemJmsMapper());
+                        .withAggregationItemMapper(new StringAggregationItemAmqpMapper());
 
             }
-
         });
     }
 
