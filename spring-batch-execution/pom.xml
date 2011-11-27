@@ -12,10 +12,6 @@
         <relativePath>../spring-batch-admin-parent</relativePath>
     </parent>
 
-    <properties>
-        <spring.amqp.version>1.0.0.RELEASE</spring.amqp.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.batch</groupId>

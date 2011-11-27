@@ -22,7 +22,7 @@
     </jms:listener-container>
 
     <bean id="requestAggregatorMessageListener"
-          class="org.springframework.batch.integration.partition.StepExecutionRequestTestListener">
+          class="org.springframework.batch.integration.partition.jms.StepExecutionRequestTestListener">
         <property name="jmsTemplate" ref="jmsTemplate"/>
 
     </bean>

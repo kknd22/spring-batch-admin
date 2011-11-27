@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.execution.aggregation.amqp.support;
+package org.springframework.batch.integration.partition.amqp;
 
 import org.springframework.amqp.core.Message;
 import org.springframework.batch.execution.aggregation.amqp.AbstractAggregationItemAmqpMapper;
+import org.springframework.batch.integration.partition.StepExecutionResult;
 
 import java.io.IOException;
 
 /**
- * Maps the body of a {@link Message} to a simple <tt>String</tt>.
+ * Mapper responsible of extracting a {@link StepExecutionResult} from an amqp {@link Message}.
  *
  * @author Stephane Nicoll
  */
-public class StringAggregationItemAmqpMapper extends AbstractAggregationItemAmqpMapper<String> {
+class StepResultAggregationItemAmqpMapper extends AbstractAggregationItemAmqpMapper<StepExecutionResult> {
 
     @Override
-    protected String doMap(Message message) throws IOException {
+    protected StepExecutionResult doMap(Message message) throws IOException {
         final Object o = getMessageConverter().fromMessage(message);
-        if (o instanceof String) {
-            return (String) o;
+        if (o instanceof StepExecutionResult) {
+            return (StepExecutionResult) o;
         } else {
-            throw new IllegalArgumentException("Expected String message but got [" + o + "]");
+            throw new IllegalArgumentException("Expected step execution result but got [" + o + "]");
         }
     }
+
 }

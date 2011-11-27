@@ -16,26 +16,18 @@
 package org.springframework.batch.integration.partition.jms;
 
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.batch.core.explore.JobExplorer;
-import org.springframework.batch.execution.aggregation.core.AggregationCompletionPolicy;
 import org.springframework.batch.execution.aggregation.core.AggregationItemMapper;
-import org.springframework.batch.execution.aggregation.core.AggregationTimeoutPolicy;
-import org.springframework.batch.execution.aggregation.core.support.CountBasedAggregationCompletionPolicy;
 import org.springframework.batch.execution.aggregation.jms.JmsAggregationContext;
 import org.springframework.batch.execution.aggregation.jms.JmsAggregationContextBuilder;
 import org.springframework.batch.execution.aggregation.jms.JmsAggregationService;
 import org.springframework.batch.execution.support.jms.ExtendedJmsTemplate;
+import org.springframework.batch.integration.partition.AbstractStepExecutionRequestAggregator;
 import org.springframework.batch.integration.partition.StepExecutionRequest;
-import org.springframework.batch.integration.partition.StepExecutionRequestAggregator;
 import org.springframework.batch.integration.partition.StepExecutionResult;
-import org.springframework.batch.integration.partition.support.StepExecutionAggregationTimeoutPolicy;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.core.SessionCallback;
 import org.springframework.jms.support.JmsUtils;
-import org.springframework.util.Assert;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -57,45 +49,27 @@ import java.util.concurrent.TimeoutException;
  *
  * @author Sebastien Gerard
  */
-public class JmsStepExecutionRequestAggregator implements StepExecutionRequestAggregator {
-
-    private final Log logger = LogFactory.getLog(JmsStepExecutionRequestAggregator.class);
-
-    public static final long DEFAULT_STEP_EXECUTION_TIMEOUT = 20 * 60 * 1000L; // 20 minutes
+public class JmsStepExecutionRequestAggregator extends AbstractStepExecutionRequestAggregator<ObjectMessage> {
 
     private ExtendedJmsTemplate jmsTemplate;
-    private JobExplorer jobExplorer;
+    private final AggregationItemMapper<Message, StepExecutionResult> aggregationItemMapper =
+            new StepResultAggregationItemJmsMapper();
+    private final JmsAggregationService jmsAggregationService = new JmsAggregationService();
 
-    private String stepExecutionRequestQueueName = "queue/stepExecutionRequestQueue";
-    private Long receiveTimeout = JmsAggregationContextBuilder.DEFAULT_RECEIVE_TIMEOUT;
-    private long stepExecutionTimeout = DEFAULT_STEP_EXECUTION_TIMEOUT;
+    public JmsStepExecutionRequestAggregator() {
+        super("queue/stepExecutionRequestQueue");
+    }
 
-    public List<StepExecutionResult> aggregate(final List<StepExecutionRequest> requests) throws TimeoutException {
-        Assert.notNull(requests, "Step execution requests cannot be null");
-
-        if (requests.size() > 0) {
-            try {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Executing [" + requests.size() + "] step execution request(s).");
-                }
-                return jmsTemplate.execute(new SessionCallback<List<StepExecutionResult>>() {
-                            public List<StepExecutionResult> doInJms(Session session) {
-                                try {
-                                    return doAggregate(requests, session);
-                                } catch (TimeoutException e) {
-                                    throw new TimeoutWrappingException(e);
-                                }
-                            }
-                        }, true);
-            } catch (TimeoutWrappingException e) {
-                throw (TimeoutException) e.getCause();
-            }
-        } else {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Empty step execution requests received, returning an empty list of result.");
-            }
-            return new ArrayList<StepExecutionResult>();
-        }
+    protected List<StepExecutionResult> doAggregate(final List<StepExecutionRequest> requests) {
+        return jmsTemplate.execute(new SessionCallback<List<StepExecutionResult>>() {
+                    public List<StepExecutionResult> doInJms(Session session) {
+                        try {
+                            return sendAndAggregate(requests, session);
+                        } catch (TimeoutException e) {
+                            throw new TimeoutWrappingException(e);
+                        }
+                    }
+                }, true);
     }
 
     /**
@@ -106,7 +80,7 @@ public class JmsStepExecutionRequestAggregator implements StepExecutionRequestAg
      * @return the aggregated results.
      * @throws java.util.concurrent.TimeoutException if the aggregation time exceeds
      */
-    protected List<StepExecutionResult> doAggregate(List<StepExecutionRequest> requests, Session session)
+    protected List<StepExecutionResult> sendAndAggregate(List<StepExecutionRequest> requests, Session session)
             throws TimeoutException {
         final Destination replyDestination = createTemporaryDestination(session);
 
@@ -114,13 +88,13 @@ public class JmsStepExecutionRequestAggregator implements StepExecutionRequestAg
 
         final JmsAggregationContext<StepExecutionResult> context = JmsAggregationContextBuilder
                 .forDestination(StepExecutionResult.class, session, replyDestination)
-                .withAggregationItemMapper(createAggregationMapper(requests))
+                .withAggregationItemMapper(aggregationItemMapper)
                 .withCompletionPolicy(createCompletionPolicy(requests))
                 .withTimeoutPolicy(createTimeoutPolicy(requests))
-                .withReceiveTimeout(receiveTimeout)
+                .withReceiveTimeout(getReceiveTimeout())
                 .build();
 
-        return new JmsAggregationService().aggregate(context);
+        return jmsAggregationService.aggregate(context);
     }
 
     /**
@@ -141,51 +115,20 @@ public class JmsStepExecutionRequestAggregator implements StepExecutionRequestAg
                     final ObjectMessage message = session.createObjectMessage(request);
 
                     message.setJMSReplyTo(replyDestination);
-                    enrichMessage(message);
-
-                    return message;
+                    return enrichMessage(message);
                 }
             });
         }
 
         try {
             final Destination requestQueue = jmsTemplate.getDestinationResolver().
-                    resolveDestinationName(session, stepExecutionRequestQueueName, false);
+                    resolveDestinationName(session, getStepExecutionRequestQueueName(), false);
             jmsTemplate.send(messageCreators, session, requestQueue);
         } catch (JMSException e) {
             throw JmsUtils.convertJmsAccessException(e);
         }
     }
 
-    /**
-     * Creates the mapper to use to map results from JMS messages.
-     *
-     * @param requests the requests to aggregate
-     * @return a new mapper instance
-     */
-    protected AggregationItemMapper<Message, StepExecutionResult> createAggregationMapper(List<StepExecutionRequest> requests) {
-        return new StepResultAggregationItemJmsMapper();
-    }
-
-    /**
-     * Creates the aggregation completion policy to use.
-     *
-     * @param requests the requests to aggregate
-     * @return a new completion policy
-     */
-    protected AggregationCompletionPolicy createCompletionPolicy(List<StepExecutionRequest> requests) {
-        return new CountBasedAggregationCompletionPolicy(requests.size());
-    }
-
-    /**
-     * Creates the aggregation timeout policy to use.
-     *
-     * @param requests the requests to aggregate
-     * @return a new timeout policy
-     */
-    protected AggregationTimeoutPolicy createTimeoutPolicy(List<StepExecutionRequest> requests) {
-        return new StepExecutionAggregationTimeoutPolicy(requests, jobExplorer, stepExecutionTimeout);
-    }
 
     /**
      * Creates a temporary destination.
@@ -202,14 +145,6 @@ public class JmsStepExecutionRequestAggregator implements StepExecutionRequestAg
     }
 
     /**
-     * Enriches the message with additional headers.
-     *
-     * @param message the message to enrich
-     */
-    protected void enrichMessage(ObjectMessage message) {
-    }
-
-    /**
      * Sets the utility class providing JMS friendly operations.
      *
      * @param jmsTemplate the JMS utility class to use
@@ -217,57 +152,6 @@ public class JmsStepExecutionRequestAggregator implements StepExecutionRequestAg
     @Required
     public void setJmsTemplate(ExtendedJmsTemplate jmsTemplate) {
         this.jmsTemplate = jmsTemplate;
-    }
-
-    /**
-     * Sets the explorer providing information about
-     * {@link org.springframework.batch.core.StepExecution}.
-     *
-     * @param jobExplorer the job explorer to use
-     */
-    @Required
-    public void setJobExplorer(JobExplorer jobExplorer) {
-        this.jobExplorer = jobExplorer;
-    }
-
-    /**
-     * Sets the name of the queue where {@link StepExecutionRequest} are sent.
-     *
-     * @param stepExecutionRequestQueueName the request queue name
-     */
-    public void setStepExecutionRequestQueueName(String stepExecutionRequestQueueName) {
-        this.stepExecutionRequestQueueName = stepExecutionRequestQueueName;
-    }
-
-    /**
-     * Sets the maximum time in seconds during the aggregator tries to read
-     * a new message result.
-     *
-     * @param receiveTimeout the JMS message receiving timeout in seconds
-     */
-    public void setReceiveTimeout(long receiveTimeout) {
-        Assert.state(receiveTimeout > 0, "The timeout must be greater than 0");
-        // Requires ms internally
-        this.receiveTimeout = receiveTimeout * 1000;
-    }
-
-    /**
-     * Sets the maximum time in seconds when a step execution that has not lead to a
-     * {@link StepExecutionResult} is allowed to have no visible update.
-     * After that the step execution is considered as dead.
-     *
-     * @param stepExecutionTimeout the step execution timeout in seconds to use
-     */
-    public void setStepExecutionTimeout(long stepExecutionTimeout) {
-        Assert.state(receiveTimeout > 0, "The timeout must be greater than 0");
-        // Requires ms internally
-        this.stepExecutionTimeout = stepExecutionTimeout * 1000;
-    }
-
-    protected static class TimeoutWrappingException extends RuntimeException {
-        public TimeoutWrappingException(Throwable cause) {
-            super(cause);
-        }
     }
 
 }

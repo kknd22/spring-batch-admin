@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+       http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit-1.0.xsd">
+
+    <description>
+        Adds a fake test listener supposed to handle step execution requests
+    </description>
+
+    <import resource="classpath:/amqp-context.xml"/>
+
+    <rabbit:queue name="queue.StepExecutionRequestAggregatorTests" auto-delete="true" durable="false"/>
+
+    <rabbit:listener-container connection-factory="connectionFactory">
+        <rabbit:listener queue-names="queue.StepExecutionRequestAggregatorTests"
+                         ref="requestAggregatorMessageListener"
+                         method="execute"/>
+    </rabbit:listener-container>
+
+    <bean id="requestAggregatorMessageListener"
+          class="org.springframework.batch.integration.partition.amqp.StepExecutionRequestTestListener">
+    </bean>
+
+
+</beans>

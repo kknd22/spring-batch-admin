@@ -85,7 +85,7 @@ public class AmqpAggregationService {
                 logger.debug("Waiting for message on [" + context.getDestination() + "]");
                 final Message input = receive(consumer, context.getReceiveTimeout());
                 if (input != null) {
-                    logger.debug("Input message received.");
+                    logger.debug("Input message received [" + input + "]");
                     final T item = context.getAggregationItemMapper().map(input);
                     // Call back whatever the input is here
                     onItemRegistration(orderedListeners, item);

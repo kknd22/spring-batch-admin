@@ -16,6 +16,8 @@
 package org.springframework.batch.execution.aggregation.amqp;
 
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.batch.execution.aggregation.core.AggregationItemMapper;
 import org.springframework.batch.execution.aggregation.core.MessageConversionException;
 import org.springframework.util.Assert;
@@ -30,6 +32,8 @@ import java.io.IOException;
  */
 public abstract class AbstractAggregationItemAmqpMapper<T> implements AggregationItemMapper<Message, T> {
 
+    private final MessageConverter messageConverter = new SimpleMessageConverter();
+
     public T map(Message message) throws MessageConversionException {
         Assert.notNull(message, "message could not be null.");
         try {
@@ -39,7 +43,7 @@ public abstract class AbstractAggregationItemAmqpMapper<T> implements Aggregatio
         }
     }
 
-     /**
+    /**
      * Maps the specified message.
      *
      * @param message the amqp message (never null)
@@ -48,5 +52,11 @@ public abstract class AbstractAggregationItemAmqpMapper<T> implements Aggregatio
      */
     protected abstract T doMap(Message message) throws IOException;
 
+    /**
+     * @return the simple message converter
+     */
+    protected MessageConverter getMessageConverter() {
+        return messageConverter;
+    }
 }
 

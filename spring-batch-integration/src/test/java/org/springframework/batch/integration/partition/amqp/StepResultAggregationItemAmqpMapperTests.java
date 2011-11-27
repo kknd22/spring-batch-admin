@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.batch.integration.partition.jms;
+package org.springframework.batch.integration.partition.amqp;
 
-import org.apache.activemq.command.ActiveMQObjectMessage;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.batch.execution.aggregation.core.AggregationItemMapper;
 import org.springframework.batch.integration.partition.AbstractStepResultAggregationItemMapperTests;
 import org.springframework.batch.integration.partition.StepExecutionResult;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageNotWriteableException;
 import java.io.Serializable;
 
 /**
- * @author Sebastien Gerard
+ * @author Stephane Nicoll
  */
-public class StepResultAggregationItemJmsMapperTests extends AbstractStepResultAggregationItemMapperTests<Message> {
+public class StepResultAggregationItemAmqpMapperTests extends AbstractStepResultAggregationItemMapperTests<Message> {
 
-    private final StepResultAggregationItemJmsMapper mapper = new StepResultAggregationItemJmsMapper();
+    private final StepResultAggregationItemAmqpMapper mapper = new StepResultAggregationItemAmqpMapper();
+    private final MessageConverter messageConverter = new SimpleMessageConverter();
 
     @Override
     protected AggregationItemMapper<Message, StepExecutionResult> getMapper() {
@@ -39,15 +40,6 @@ public class StepResultAggregationItemJmsMapperTests extends AbstractStepResultA
 
     @Override
     protected Message createTestMessage(Serializable payload) {
-        try {
-            final ActiveMQObjectMessage message = new ActiveMQObjectMessage();
-            message.setObject(payload);
-            return message;
-        } catch (MessageNotWriteableException e) {
-            throw new IllegalStateException(e);
-        } catch (JMSException e) {
-            throw new IllegalStateException(e);
-        }
+        return messageConverter.toMessage(payload, new MessageProperties());
     }
-
 }
