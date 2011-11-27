@@ -17,10 +17,13 @@
         <property name="dataSource" ref="dataSource"/>
         <property name="initScripts">
             <list>
+                <value>org/springframework/batch/core/schema-drop-hsqldb.sql</value>
                 <value>org/springframework/batch/core/schema-hsqldb.sql</value>
             </list>
         </property>
     </bean>
+
+
 
     <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
         <property name="driverClassName" value="org.hsqldb.jdbcDriver"/>

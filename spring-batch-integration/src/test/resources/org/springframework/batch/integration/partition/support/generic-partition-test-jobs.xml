@@ -7,27 +7,12 @@
        http://www.springframework.org/schema/batch
        http://www.springframework.org/schema/batch/spring-batch.xsd">
 
-
-    <bean id="requestAggregator"
-          class="org.springframework.batch.integration.partition.jms.JmsStepExecutionRequestAggregator">
-        <description>
-            Component responsible to send the request(s) to remote workers and aggregate the result.
-        </description>
-        <property name="jobExplorer" ref="jobExplorer"/>
-        <property name="jmsTemplate" ref="jmsTemplate"/>
-        <property name="stepExecutionRequestQueueName" value="queue/stepExecutionRequest"/>
-        <property name="stepExecutionTimeout" value="300"/>
-    </bean>
-
-    <bean id="partitioner" class="org.springframework.batch.core.partition.support.SimplePartitioner"/>
-
     <!-- A simple job that is configured properly -->
     <job id="job1" xmlns="http://www.springframework.org/schema/batch">
         <step id="step1-master">
             <partition handler="job1PartitionHandler" partitioner="partitioner"/>
         </step>
     </job>
-
 
     <step id="step1" xmlns="http://www.springframework.org/schema/batch">
         <tasklet>
@@ -53,7 +38,7 @@
         <property name="requestAggregator" ref="requestAggregator"/>
     </bean>
 
-     <!-- A simple job that is configured properly -->
+    <!-- A simple job that is configured properly -->
     <job id="job2" xmlns="http://www.springframework.org/schema/batch">
         <step id="step2-master">
             <partition handler="job2PartitionHandler" partitioner="partitioner"/>
@@ -68,5 +53,8 @@
         <property name="stepName" value="unknownStep"/>
         <property name="requestAggregator" ref="requestAggregator"/>
     </bean>
+
+    <bean id="partitioner" class="org.springframework.batch.core.partition.support.SimplePartitioner"/>
+
 
 </beans>

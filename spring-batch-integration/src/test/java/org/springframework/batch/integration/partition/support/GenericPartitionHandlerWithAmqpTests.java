@@ -26,7 +26,5 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @ContextConfiguration
 @RunWith(SpringJUnit4ClassRunner.class)
 @DirtiesContext
-public class GenericPartitionHandlerWithJmsTests extends AbstractGenericPartitionHandlerJobTests {
-
-
+public class GenericPartitionHandlerWithAmqpTests extends AbstractGenericPartitionHandlerJobTests {
 }

@@ -1,27 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jms="http://www.springframework.org/schema/jms"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
-       http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+       http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.0.xsd">
 
-    <import resource="classpath:/org/springframework/batch/integration/partition/jms/jms-aggregation-context.xml"/>
+    <description>
+        A typical Spring configuration using the JMS capabilities of the Generic partition handler. Distributes
+        the partition(s) to execute using JMS.
+    </description>
 
-    <bean id="jobLoader" class="org.springframework.batch.core.configuration.support.DefaultJobLoader">
-        <property name="jobRegistry" ref="jobRegistry"/>
+    <import resource="generic-partition-register-test-jobs.xml"/>
+    <import resource="classpath:/jms-extended-context.xml"/>
+
+    <bean id="requestAggregator"
+          class="org.springframework.batch.integration.partition.jms.JmsStepExecutionRequestAggregator">
+        <description>
+            Component responsible to send the request(s) to remote workers and aggregate the result.
+        </description>
+        <property name="jobExplorer" ref="jobExplorer"/>
+        <property name="jmsTemplate" ref="jmsTemplate"/>
+        <property name="stepExecutionRequestQueueName" value="queue/stepExecutionRequestJobTest"/>
+        <property name="stepExecutionTimeout" value="300"/>
     </bean>
 
-    <!-- Register the jobs and feeds the registries to be used by (remote) workers -->
-    <bean class="org.springframework.batch.core.configuration.support.AutomaticJobRegistrar">
-		<property name="applicationContextFactories">
-			<bean class="org.springframework.batch.core.configuration.support.ClasspathXmlApplicationContextsFactoryBean">
-				<property name="resources" value="classpath:/org/springframework/batch/integration/partition/jms/jms-execution-jobs.xml" />
-			</bean>
-		</property>
-		<property name="jobLoader">
-			<bean class="org.springframework.batch.core.configuration.support.DefaultJobLoader">
-				<property name="jobRegistry" ref="jobRegistry" />
-			</bean>
-		</property>
-	</bean>
+
+    <bean name="queue/stepExecutionRequestJobTest" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg value="queue/stepExecutionRequestJobTest"/>
+    </bean>
+
+    <jms:listener-container destination-resolver="destinationResolver"
+                            connection-factory="connectionFactory"
+                            destination-type="queue"
+                            concurrency="5">
+        <jms:listener destination="queue/stepExecutionRequestJobTest" ref="messageListener"/>
+    </jms:listener-container>
+
+    <bean id="messageListener"
+          class="org.springframework.batch.integration.partition.jms.StepExecutionRequestMessageListener">
+        <property name="jmsTemplate" ref="jmsTemplate"/>
+        <property name="stepExecutionRequestHandler">
+            <bean class="org.springframework.batch.integration.partition.DefaultStepExecutionRequestHandler">
+                <property name="jobRepository" ref="jobRepository"/>
+                <property name="stepRegistry" ref="jobRegistry"/>
+                <property name="stepExecutionRequestMapper">
+                    <bean class="org.springframework.batch.integration.partition.support.DefaultStepExecutionRequestMapper">
+                        <property name="jobExplorer" ref="jobExplorer"/>
+                    </bean>
+                </property>
+                <!-- Some listeners could be added here -->
+            </bean>
+        </property>
+    </bean>
 
 </beans>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-2.5.xsd 
+         http://www.springframework.org/schema/rabbit
+         http://www.springframework.org/schema/rabbit/spring-rabbit-1.0.xsd">
+
+    <description>
+        A typical Spring configuration using the AMQP capabilities of the Generic partition handler. Distributes
+        the partition(s) to execute using AMQP.
+    </description>
+
+    <import resource="generic-partition-register-test-jobs.xml"/>
+    <import resource="classpath:/amqp-context.xml"/>
+
+    <bean id="requestAggregator"
+          class="org.springframework.batch.integration.partition.amqp.AmqpStepExecutionRequestAggregator">
+        <description>
+            Component responsible to send the request(s) to remote workers and aggregate the result.
+        </description>
+        <property name="jobExplorer" ref="jobExplorer"/>
+        <property name="amqpTemplate" ref="amqpTemplate"/>
+        <property name="stepExecutionRequestQueueName" value="queue.stepExecutionRequestJobTest"/>
+        <property name="stepExecutionTimeout" value="300"/>
+    </bean>
+
+    <rabbit:queue name="queue.stepExecutionRequestJobTest" auto-delete="true" durable="false"/>
+
+    <rabbit:listener-container connection-factory="connectionFactory">
+        <rabbit:listener queue-names="queue.stepExecutionRequestJobTest"
+                         ref="messageListener" method="execute"/>
+    </rabbit:listener-container>
+
+    <bean id="messageListener"
+          class="org.springframework.batch.integration.partition.amqp.StepExecutionRequestMessageListener">
+        <property name="stepExecutionRequestHandler">
+            <bean class="org.springframework.batch.integration.partition.DefaultStepExecutionRequestHandler">
+                <property name="jobRepository" ref="jobRepository"/>
+                <property name="stepRegistry" ref="jobRegistry"/>
+                <property name="stepExecutionRequestMapper">
+                    <bean class="org.springframework.batch.integration.partition.support.DefaultStepExecutionRequestMapper">
+                        <property name="jobExplorer" ref="jobExplorer"/>
+                    </bean>
+                </property>
+                <!-- Some listeners could be added here -->
+            </bean>
+        </property>
+    </bean>
+
+</beans>
