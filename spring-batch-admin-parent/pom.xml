@@ -3,9 +3,29 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.springframework.batch</groupId>
 	<artifactId>spring-batch-admin-parent</artifactId>
-	<version>1.2.1.BUILD-SNAPSHOT</version>
+	<version>1.2.2.BUILD-SNAPSHOT</version>
 	<name>Spring Batch Admin Parent</name>
+	<description>A set of services (Java, JSON) and a UI (webapp) for managing and launching Spring Batch jobs.</description>
+	<url>http://www.springsource.org/spring-batch-admin</url>
 	<packaging>pom</packaging>
+	<scm>
+		<url>http://static.springframework.org/spring-batch-admin</url>
+		<connection>scm:git:git://github.com/SpringSource/spring-batch-admin.git</connection>
+		<developerConnection>scm:git:git://github.com/SpringSource/spring-batch-admin.git</developerConnection>
+	</scm>
+	<licenses>
+		<license>
+			<name>Apache 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<id>dsyer</id>
+			<name>Dave Syer</name>
+			<email>dsyer@vmware.com</email>
+		</developer>
+	</developers>
 	<properties>
 		<maven.test.failure.ignore>true</maven.test.failure.ignore>
 		<spring.batch.version>2.2.0.BUILD-SNAPSHOT</spring.batch.version>
@@ -47,12 +67,33 @@
 		<profile>
 			<id>central</id>
 			<distributionManagement>
+				<snapshotRepository>
+					<id>sonatype-nexus-snapshots</id>
+					<name>Sonatype Nexus Snapshots</name>
+					<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+				</snapshotRepository>
 				<repository>
-					<id>spring-sourceforge</id>
-					<name>Spring Sourceforge Repository</name>
-					<url>file:///${user.home}/dev/sourceforge</url>
+					<id>sonatype-nexus-staging</id>
+					<name>Nexus Release Repository</name>
+					<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 				</repository>
 			</distributionManagement>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 		<profile>
 			<id>dist</id>
@@ -123,6 +164,45 @@
 	<build>
 		<pluginManagement>
 			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>com.springsource.bundlor</groupId>
+										<artifactId>com.springsource.bundlor.maven</artifactId>
+										<versionRange>[1.0,)</versionRange>
+										<goals>
+											<goal>bundlor</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore />
+									</action>
+								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-antrun-plugin</artifactId>
+										<versionRange>[1.0,)</versionRange>
+										<goals>
+											<goal>run</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
 				<plugin>
 					<artifactId>maven-site-plugin</artifactId>
 					<version>2.0</version>

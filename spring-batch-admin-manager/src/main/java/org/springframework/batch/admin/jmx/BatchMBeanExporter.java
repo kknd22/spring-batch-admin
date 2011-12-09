@@ -67,11 +67,27 @@ public class BatchMBeanExporter extends MBeanExporter implements SmartLifecycle 
 
 	private String domain = DEFAULT_DOMAIN;
 
+	private boolean registerSteps = true;
+
+	private JobExecutionMetricsFactory jobExecutionMetricsFactory = new ExecutionMetricsFactory();
+
+	private StepExecutionMetricsFactory stepExecutionMetricsFactory = new ExecutionMetricsFactory();
+
 	public BatchMBeanExporter() {
 		super();
 		setAutodetect(false);
 		setNamingStrategy(new MetadataNamingStrategy(attributeSource));
 		setAssembler(new MetadataMBeanInfoAssembler(attributeSource));
+	}
+
+	/**
+	 * Flag to determine if any metrics at all should be exposed for step
+	 * executions (default true). Set to fals eto only expose job-level metrics.
+	 * 
+	 * @param registerSteps the flag to set
+	 */
+	public void setRegisterSteps(boolean registerSteps) {
+		this.registerSteps = registerSteps;
 	}
 
 	/**
@@ -107,6 +123,26 @@ public class BatchMBeanExporter extends MBeanExporter implements SmartLifecycle 
 		this.objectNameStaticProperties.putAll(objectNameStaticProperties);
 	}
 
+	/**
+	 * Factory for {@link JobExecutionMetrics}. Can be used to customize and
+	 * extend the metrics exposed.
+	 * 
+	 * @param stepExecutionMetricsFactory the {@link StepExecutionMetricsFactory} to set
+	 */
+	public void setStepExecutionMetricsFactory(StepExecutionMetricsFactory stepExecutionMetricsFactory) {
+		this.stepExecutionMetricsFactory = stepExecutionMetricsFactory;
+	}
+
+	/**
+	 * Factory for {@link StepExecutionMetrics}. Can be used to customize and
+	 * extend the metrics exposed.
+	 * 
+	 * @param jobExecutionMetricsFactory the {@link JobExecutionMetricsFactory} to set
+	 */
+	public void setJobExecutionMetricsFactory(JobExecutionMetricsFactory jobExecutionMetricsFactory) {
+		this.jobExecutionMetricsFactory = jobExecutionMetricsFactory;
+	}
+
 	@Override
 	public void afterPropertiesSet() {
 		Assert.state(jobService != null, "A JobService must be provided");
@@ -118,6 +154,9 @@ public class BatchMBeanExporter extends MBeanExporter implements SmartLifecycle 
 	}
 
 	private void registerSteps() {
+		if (!registerSteps) {
+			return;
+		}
 		for (String jobName : jobService.listJobs(0, Integer.MAX_VALUE)) {
 			Collection<JobExecution> jobExecutions = Collections.emptySet();
 			try {
@@ -135,7 +174,7 @@ public class BatchMBeanExporter extends MBeanExporter implements SmartLifecycle 
 					if (!stepKeys.contains(stepKey)) {
 						stepKeys.add(stepKey);
 						logger.info("Registering step execution " + stepKey);
-						registerBeanNameOrInstance(new SimpleStepExecutionMetrics(jobService, jobName, stepName),
+						registerBeanNameOrInstance(stepExecutionMetricsFactory.createMetricsForStep(jobName, stepName),
 								beanKey);
 					}
 				}
@@ -148,7 +187,7 @@ public class BatchMBeanExporter extends MBeanExporter implements SmartLifecycle 
 			if (!jobKeys.contains(jobName)) {
 				jobKeys.add(jobName);
 				logger.info("Registering job execution " + jobName);
-				registerBeanNameOrInstance(new SimpleJobExecutionMetrics(jobService, jobName),
+				registerBeanNameOrInstance(jobExecutionMetricsFactory.createMetricsForJob(jobName),
 						getBeanKeyForJobExecution(jobName));
 			}
 		}
@@ -162,7 +201,7 @@ public class BatchMBeanExporter extends MBeanExporter implements SmartLifecycle 
 	 * @return a String representation of an ObjectName
 	 */
 	protected String getBeanKeyForJobExecution(String jobName) {
-		jobName=escapeForObjectName(jobName);
+		jobName = escapeForObjectName(jobName);
 		return String.format("%s:type=JobExecution,name=%s", domain, jobName) + getStaticNames();
 	}
 
@@ -175,11 +214,10 @@ public class BatchMBeanExporter extends MBeanExporter implements SmartLifecycle 
 	 * @return a String representation of an ObjectName
 	 */
 	protected String getBeanKeyForStepExecution(String jobName, String stepName) {
-		jobName=escapeForObjectName(jobName);
-		stepName=escapeForObjectName(stepName);
+		jobName = escapeForObjectName(jobName);
+		stepName = escapeForObjectName(stepName);
 		return String.format("%s:type=JobExecution,name=%s,step=%s", domain, jobName, stepName) + getStaticNames();
 	}
-
 
 	private String getStaticNames() {
 		if (objectNameStaticProperties.isEmpty()) {
@@ -314,6 +352,18 @@ public class BatchMBeanExporter extends MBeanExporter implements SmartLifecycle 
 	protected void doStart() {
 		registerJobs();
 		registerSteps();
+	}
+
+	private class ExecutionMetricsFactory implements JobExecutionMetricsFactory, StepExecutionMetricsFactory {
+
+		public StepExecutionMetrics createMetricsForStep(String jobName, String stepName) {
+			return new SimpleStepExecutionMetrics(jobService, jobName, stepName);
+		}
+
+		public JobExecutionMetrics createMetricsForJob(String jobName) {
+			return new SimpleJobExecutionMetrics(jobService, jobName);
+		}
+
 	}
 
 }
